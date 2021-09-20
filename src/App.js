@@ -15,7 +15,7 @@ class App extends Component {
     return (
       <>
       <h1>Data</h1>
-      <BestBooks title={this.props.title}/>
+      <BestBooks bookData={this.props.bookData}/>
       </>
     )
   }
