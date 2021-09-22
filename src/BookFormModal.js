@@ -1,67 +1,52 @@
-import Modal from "react-bootstrap/Modal";
+import { Component } from 'react';
 import Form from 'react-bootstrap/Form';
-import Button from 'react-bootstrap/Button'
+import Button from 'react-bootstrap/Button';
 
-import React, { Component } from 'react'
+class BookFormModal extends Component {
 
-
-
-
-export class BookFormModal extends Component {
-
-
-
-    
-    handleTitle = (e) => { this.setState({ title: e.target.booknames.value }) };
-        descriptionHandler = (e) => { this.setState({ description: e.target.booksDescription.value }) };
-        statusHandler = (e) => { this.setState({ status: e.target.booksStatus.value }) };
-        emailHandler = (e) => { this.setState({ email: e.target.email.value }) }
-    render() {
-        return (
-            <div>
-                <Modal show={this.props.show} onHide={this.props.handleClos}>
-
-                    <Modal.Header closeButton>
-                        <Modal.Title>add ur book here</Modal.Title>
-                    </Modal.Header>
-
-                    <Modal.Body>
-                        <Form onSubmit={this.props.submithandler}>
-
-                            <Form.Group controlId="formEmail">
-                                <Form.Label>Book Name</Form.Label>
-                                <Form.Control tybe="text" name="booknames" onChange={this.props.title}/>
-                            </Form.Group>
-
-                            <Form.Group controlId="formEmail">
-                                <Form.Label>Book Description</Form.Label>
-                                <Form.Control type="text" name="booksDescription" onChange={this.props.description} />
-                            </Form.Group>
-                            <Form.Group controlId="formEmail">
-                                <Form.Label>Book Status</Form.Label>
-                                <Form.Control type="text" name="booksStatus" onChange={this.props.status}/>
-                            </Form.Group>
-                            <Form.Group controlId="formEmail">
-                                <Form.Label>Your Email</Form.Label>
-                                <Form.Control type="text" name="email" onChange={this.props.email}/>
-                            </Form.Group>
-                            <Button variant="primary" type="submit" onClick={this.props.submithandler}>
-                                Submit
-                            </Button>
-
-                        </Form>{" "}
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={this.props.handleClos}>Close it</Button>
-                        <Button variant="primary" onClick={this.props.submithandler}>Save Changes</Button>
-                    </Modal.Footer>
+  handleSubmit = (event) => {
+    event.preventDefault();
+    const bookInformation = {
+      title: event.target.title.value,
+      description: event.target.description.value,
+      status: event.target.statusbox.checked,
+      email: event.target.email.value,
+    };
+    this.props.onCreate(bookInformation);
+  }
 
 
-                </Modal>
 
-            </div >
-        )
-    }
+  render() {
+    return (
+      <Form onSubmit={this.handleSubmit}>
+        <Form.Group className="mb-3" controlId="title">
+          <Form.Label>Title</Form.Label>
+          <Form.Control type="title" placeholder="Enter book title" />
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="description">
+          <Form.Label>Description</Form.Label>
+          {/* //might not need onChange */}
+          <Form.Control type="description" placeholder="Enter book description" />
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="email">
+          <Form.Label>email</Form.Label>
+          <Form.Control type="email" placeholder="Enter email" />
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="statusbox">
+          <Form.Check type="checkbox" label="Read" />
+        </Form.Group>
+
+        <Button variant="primary" type="submit">
+          SUBMIT
+        </Button>
+
+      </Form>
+    );
+  }
 }
 
-export default BookFormModal
+export default BookFormModal;

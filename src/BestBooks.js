@@ -1,162 +1,163 @@
-import React, { Component } from 'react'
+import React from 'react';
+import Book from './Book';
 import axios from 'axios';
-import BookFormModel from "./BookFormModal";
-import Button from "react-bootstrap/Button";
-import Card from "react-bootstrap/Card";
+import BookFormModal from './BookFormModal';
+import AddBookButton from './AddBookButton';
+import Carousel from 'react-bootstrap/Carousel';
+import UpdateBook from './UpdateBook';
+import { withAuth0 } from '@auth0/auth0-react';
 
+const API = process.env.REACT_APP_API_URL;
 
+class BestBooks extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      books: [],
+      showModal: false,
+      selectBook: null,
+    };
+  }
 
+  //This is showing the create a book form
+  BookFormHandler = () => {
+    this.setState({
+      showModal: true
+    });
+  }
 
+  //this was our app.get function before
+  componentDidMount = () => {
+    this.props.auth0.getIdTokenClaims().then(async res => {
+      const  jwt_key= res.__raw;
 
+      const config = {
+        headers: { Authorization: `Bearer ${jwt_key}` },
+        baseURL: API,
+        url: '/books',
+        params: { email: this.props.auth0.user.email },
+        method: 'get'
+      };
 
-export class BestBooks extends Component {
+      const responses = await axios(config);
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            bookData: [],
-            displayModel: false,
-            title: '',
-            description: '',
-            status: '',
-            email: '',
-            id: ''
-        };
-    }
+      this.setState({ books: responses.data });
+    })
+      .catch(err => console.error(err));
+  }
 
-    displayModel = () => {
-        this.setState({ displayModel: !this.state.displayModel })
-    }
- 
-    componentDidMount = () => {
-        axios.get(`${process.env.REACT_APP_API_URL}/books/data`)
-            .then(res => {
-                this.setState({ bookData:res.data });
-            })
+  //This function, along with addBook is creating a book
+  createBook = async (bookInformation) => {
+    this.props.auth0.getIdTokenClaims().then(async res => {
+      const jwt_key = res.__raw;
 
-        }
-        handleTitle = (e) => { this.setState({ title: e.target.booknames.value }) };
-        descriptionHandler = (e) => { this.setState({ description: e.target.booksDescription.value }) };
-        statusHandler = (e) => { this.setState({ status: e.target.booksStatus.value }) };
-        emailHandler = (e) => { this.setState({ email: e.target.email.value }) }
+      const config = {
+        headers: { Authorization: `Bearer ${jwt_key}` },
+        data: bookInformation,
+        baseURL: API,
+        url: '/books',
+        method: 'post',
+        params: { email: this.props.auth0.user.email }
+      };
+      try {
+        const responses = await axios(config);
+        const newBook = responses.data;
+        const books = [...this.state.books, newBook];
+        this.setState({ books });
+        this.setState({ showModal: false });
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  }
 
+  //This is showing the update a book form
+  UpdateModal = (book) => {
+    this.setState({
+      selectedBook: book
+    });
+  }
 
+  //This is hiding the update a book form
+  closeUpdatedModal = () => {
+    this.setState({
+      selectBook: null
+    });
+  }
 
-        submithandler = (e) => {
-            e.preventDefault();
-            let config = {
-                method: "POST",
-                baseURL: process.env.REACT_APP_BACKEND_URL,
-                url: `/books`,
-                data: {
-                    title: this.state.title,
-                    description: this.state.description,
-                    status: this.state.status,
+  updateBook = async (updateBooklast) => {
 
-                    email: this.state.email
-                }
-            }
-            axios(config).then(res => {
-                console.log(res.data)
-                this.setState({
-                    bookData: res.data
-                })
-            })
-            console.log(this.state.bookData);
-        }
-        // submithandler=(e)=>{
-        //     e.preventDefault();
-        //     let config={
-        //       method:"POST",
-        //       baseURL:`${process.env.REACT_APP_API_URL}`,
-        //       url:"/books",
-        //       data:{
-        //         title: e.target.booknames.value,
-        //          description: e.target.booksDescription.value,
-        //          status: e.target.booksStatus.value,
-        //          email: e.target.email.value,
-        //       }
+    this.props.auth0.getIdTokenClaims().then(async res => {
+      const jwt_key = res.__raw;
 
-        //     }
-        //     axios(config).then(response=>{
-        //       this.setState({
-        //         catsList:response.data
-        //       })
-        //     })
-        //   }
-        // deleteHandler= (bookId)=>{
-        //     axios.delete(`${process.env.REACT_APP_API_URL}/books/${bookId}`)
-        //     .then((deleteres)={
-        //         if (deleteres.data.deletedCount ===1){
+      const config = {
+        headers: { 'Authorization': `Bearer ${jwt_key}` },
+        data: updateBooklast,
+        method: 'put',
+        baseURL: API,
+        url: `/books/${updateBooklast._id}`,
+        params: { email: this.props.auth0.user.email },
+      };
+      try {
+        const responses = await axios(config);
+        const updatedBook = responses.data;
+        const books = this.state.books.map(currentBook => updatedBook._id === currentBook._id ? updatedBook : currentBook);
+        this.setState({ books, selectBook: null });
+      } catch (err) {
+        console.log(err);
+      }
+    });
+  }
 
-        //             const booksArrNew = this.state.bookData.filter(
-        //                 (book)=>book._id !==bookId
-        //             );
-        //             this.setState({bookData:booksArrNew});
-        //         }
-        //     }).catch(()=>alert("erroe mass"));
-        // }
-        handleDelete = (id) => {
-            let bookId = id;
-            let config = {
-                method: "DELETE",
-                baseURL: `${process.env.REACT_APP_API_URL}`,
-                url: `/books/${id}`,
+  // function that removes book from carousel
+  removeBook = async (bookRemove) => {
+    this.props.auth0.getIdTokenClaims().then(async res => {
+      const jwt_key = res.__raw;
+      const config = {
+        params: { email: this.props.auth0.user.email },
+        headers: { 'Authorization': `Bearer ${jwt_key}` },
+        method: 'delete',
+        baseURL: process.env.REACT_APP_API_URL,
+        url: `/books/${bookRemove._id}`,
+        data: bookRemove,
+      };
+      await axios(config);
+      const books = this.state.books.filter(candidate => candidate._id !== bookRemove._id);
+      this.setState({ books });
+    });
+  }
 
-            }
+  render() {
+    return (
+      <>
+        <h2>My Book List</h2>
 
-            axios(config).then(response => {
-                this.setState({
-                    catsList: response.data
-                })
-            })
-        }
-
-        render() {
+        {this.state.books.length ? (
+          <Carousel>{this.state.books.map((books) => {
             return (
-                <div>
-                    <Button onClick={this.displayModel}>add new book</Button>
-
-                    {this.state.displayModel &&
-
-                        <BookFormModel
-                            show={this.state.displayModel}
-                            handleClos={this.displayModel}
-                            submithandler={this.submithandler}
-                        />
-                    }
-
-                    {this.state.bookData.length > 0 &&
-                        <>
-                            {this.state.bookData.map((items,index) => {
-                                return (
-                                    
-                                        <Card key={index}>
-                                            <Card.Body>
-                                                
-                                                <Card.Title>{items.title}</Card.Title>
-                                                <Card.Text>{items.description}</Card.Text>
-                                                <Card.Text>{items.status}</Card.Text>
-                                                <Card.Text>{items.email}</Card.Text>
-                                            </Card.Body>
-                                            <Button variant="danger"
-                                                onClick={() => this.handleDelete(items._id)}
-                                            > Delete item</Button>
-                                        </Card>
-                                    
-                                )
-                            })}
-
-                        </>
-                    }
-
-                </div>
+              <Carousel.Item key={books._id}>
+                <Book
+                  title={books.title}
+                  description={books.description}
+                  status={books.status}
+                  email={books.email}
+                  onDelete={this.removeBook}
+                  onUpdateModal={this.UpdateModal}
+                  book={books}>
+                </Book>
+              </Carousel.Item>
+            );
+          })}
+          </Carousel>) : (<h3>No Books Found </h3>)}
 
 
-            )
+        {this.state.showModal ? <BookFormModal onCreate={this.createBook} /> : <AddBookButton onButtonClick={this.BookFormHandler} />}
 
-        }
-    }
+        <UpdateBook book={this.state.selectBook} onUpdate={this.updateBook} onClose={this.closeUpdatedModal} />
 
+      </>
+    );
+  }
+}
 
-export default BestBooks
+export default withAuth0(BestBooks);

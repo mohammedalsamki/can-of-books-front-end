@@ -1,128 +1,46 @@
-import React, { Component } from 'react'
-import Bookdata from './componnent/bookdata';
-import axios from 'axios';
-class App extends Component {
-  constructor(props){
-    super(props);
-    this.state={
-      booklist:[],
-      title: '',
-      description: '',
-      status: '',
-      email: '',
-      id: '',
-      showUpdate:false
-    }
-  }
-  componentDidMount=()=>{
-    axios.get(`${process.env.REACT_APP_API_URL}/book-list`)
-    .then(res=>{
-      this.setState({booklist:res.data});    
-    })
-  }
-  handleDelete=(id)=>{
-    let config={
-      method:"DELETE",
-      baseURL:process.env.REACT_APP_API_URL,
-      url:`/delete-book/${id}`
-    }
-    axios(config).then(res=>{
-      console.log(res.data);
-    })
+import React from 'react';
+import Header from './Header';
+import Footer from './Footer';
+import Profile from './Profile';
+import Login from './Login';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { withAuth0 } from '@auth0/auth0-react';
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route
+} from 'react-router-dom';
+import BestBooks from './BestBooks';
 
-  }
 
-  handleTitle = (e) => { this.setState({ title: e.target.value }) };
-  descriptionHandler = (e) => { this.setState({ description: e.target.value }) };
-  statusHandler = (e) => { this.setState({ status: e.target.value }) };
-  emailHandler = (e) => { this.setState({ email: e.target.value }) }
+class App extends React.Component {
 
-  handleSubmit=(e)=>{
-    e.preventDefault();
-    let config={
-      method:"POST",
-      baseURL:process.env.REACT_APP_API_URL,
-      url:`/create-book`,
-      data:{
-        title:this.state.title,
-        description:this.state.description,
-        status:this.state.status,
-        email:this.state.email
-      }
-    }
-    axios(config).then(res=>{
-      console.log(res.data)
-      this.setState({
-        booklist:res.data
-      })
-    })
-  }
-  handleUpdate=(id,title,description,status,email)=>{
-    this.setState({
-       title:this.state.title,
-        description:this.state.description,
-        status:this.state.status,
-        email:this.state.email,
-      id:id,
-      showUpdate:true
-    })
-  }
-  handleUpdateForm=()=>{
-    let config={
-      method:"PUT",
-      baseURL:process.env.REACT_APP_API_URL,
-      url:`/update-book/${this.state.id}`,
-      data:{
-        title:this.state.title,
-        description:this.state.description,
-        status:this.state.status,
-        email:this.state.email
-      }
-    }
-    axios(config).then(res=>{
-      this.setState({
-        booklist:res.data
-      })
-    });
-  }
+  
+
   render() {
     return (
-      <div>
-        {
-          !this.state.showUpdate?<>
-                  <form onSubmit={this.handleSubmit}>
-          <input type="texts" placeholder="title" onChange={this.handleTitle}/>
-          <input type="texts" placeholder="description" onChange={this.descriptionHandler}/>
-          <input type="texts" placeholder="status" onChange={this.statusHandler}/>
-          <input type="texts" placeholder="email" onChange={this.emailHandler}/>
-          <input type="submit" value="create"/>
-        </form>
-          </>:
-          // Update form
-        <form onSubmit={this.handleUpdateForm}>
-         <input type="texts" placeholder="title" onChange={this.handleTitle}/>
-          <input type="texts" placeholder="description" onChange={this.descriptionHandler}/>
-          <input type="texts" placeholder="status" onChange={this.statusHandler}/>
-          <input type="texts" placeholder="email" onChange={this.emailHandler}/>
-        <input type="submit" value="update"/>
-      </form>   
-        }
-        {
-          this.state.booklist.map(books=>{
-            return <Bookdata 
-                            title={books.title}
-                            description={books.description}
-                            status={books.status}
-                            email={books.email}
-                            id={books._id}
-                            handleDelete={this.handleDelete}
-                            handleUpdate={this.handleUpdate}
-                            />
-          })
-        }
-      </div>
-    )
+      <>
+        <Router>
+
+          <Header />
+
+          <Switch>
+            <Route exact path="/">
+              {this.props.auth0.isAuthenticated ? <BestBooks /> : <Login onLoginSubmit={this.loginHandler} handleFormInput={this.formInputHandler} />}
+            </Route>
+
+            <Route path="/profile">
+              <Profile />
+            </Route>
+            <Route path="/test">
+              <h2>this is a test </h2>
+            </Route>
+          </Switch>
+          <Footer />
+        </Router>
+      </>
+    );
   }
 }
 
-export default App
+export default withAuth0(App);
